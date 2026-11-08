@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Essential Eight Maturity Level 1 assessment for a Windows host (ASD/ACSC).
+    Workstation checks for selected ASD Essential Eight Maturity Level 1 requirements.
 
 .DESCRIPTION
-    Checks the local machine against the ASD Essential Eight Maturity Model (Maturity
-    Level 1) across all eight mitigation strategies, scores each Aligned / Partial /
-    Not aligned, and writes a Markdown + JSON report. Read-only - it changes nothing.
+    Collects local signals across the eight mitigation strategies and writes Markdown
+    and JSON reports. The status labels and score are internal lab measures.
+    The checks are read-only.
     Run from an elevated PowerShell (several checks need administrator rights).
 
 .PARAMETER OutDir
@@ -84,8 +84,8 @@ function Test-PatchApplications {
         $detail = "$pending pending software update(s); last patch $ageDays day(s) ago."
     }
     New-Finding 2 'Patch applications' $status $detail `
-        'Patches for applications are applied within one month (two weeks for internet-facing / 48h if exploited); a vulnerability scanner is used at least fortnightly.' `
-        'ML2 tightens the SLA to two weeks and requires the scanner to run weekly against applications.'
+        'Scanning runs daily for online services and weekly for specified application categories. Patch deadlines depend on the application category and vulnerability severity.' `
+        'ML2 extends scanning and patching coverage to other applications. Check the ASD model for the full criteria.'
 }
 
 # ---- 3. Office macro settings ----------------------------------------------
@@ -237,29 +237,28 @@ $findings = @(
 $aligned = @($findings | Where-Object Status -eq 'Aligned').Count
 $maxPoints = $findings.Count * 2
 $points = ($findings | Measure-Object Points -Sum).Sum
-$ml1 = if ($aligned -eq 8) { 'ML1 (all eight aligned)' }
-       elseif ($aligned -ge 4) { "Partial ML1 ($aligned/8 aligned)" }
-       else { "Below ML1 ($aligned/8 aligned)" }
+$labChecks = "$aligned/$($findings.Count) rated aligned by the tool"
 
 # ---- write reports ----------------------------------------------------------
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 $summary = [pscustomobject]@{
     host = $env:COMPUTERNAME; label = $Label; generated = (Get-Date).ToString('u')
-    aligned = $aligned; points = $points; maxPoints = $maxPoints; posture = $ml1
+    aligned = $aligned; points = $points; maxPoints = $maxPoints; posture = $labChecks
     findings = $findings
 }
 $summary | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $OutDir "$Label.json") -Encoding UTF8
 
 $md = @()
-$md += "# Essential Eight (ML1) Assessment - $($env:COMPUTERNAME)"
+$md += "# Essential Eight Workstation Checks - $($env:COMPUTERNAME)"
 $md += "*Run label: ``$Label`` | Generated $(Get-Date -Format 'yyyy-MM-dd HH:mm') | Read-only assessment*`n"
-$md += "**Posture: $ml1**  |  Score: $points / $maxPoints  |  Aligned controls: $aligned / 8`n"
+$md += "**Lab checks: $labChecks**  |  Internal lab score: $points / $maxPoints`n"
+$md += "The status labels reflect local checks. Refer to the ASD maturity model for the full criteria.`n"
 $md += "| # | Mitigation | Status | Detail |"
 $md += "|---|---|---|---|"
 foreach ($f in $findings) {
     $md += "| $($f.Number) | $($f.Control) | **$($f.Status)** | $($f.Detail) |"
 }
-$md += "`n## ML1 requirement & ML2 gap, per control`n"
+$md += "`n## Selected maturity model references`n"
 foreach ($f in $findings) {
     $md += "### $($f.Number). $($f.Control) - $($f.Status)"
     $md += "- **ML1:** $($f.Ml1Requirement)"
@@ -268,10 +267,10 @@ foreach ($f in $findings) {
 ($md -join "`n") | Set-Content (Join-Path $OutDir "$Label.md") -Encoding UTF8
 
 # ---- console summary --------------------------------------------------------
-Write-Host "`nEssential Eight ML1 assessment - $($env:COMPUTERNAME) [$Label]" -ForegroundColor Cyan
+Write-Host "`nEssential Eight workstation checks - $($env:COMPUTERNAME) [$Label]" -ForegroundColor Cyan
 foreach ($f in $findings) {
     $color = switch ($f.Status) { 'Aligned' { 'Green' } 'Partial' { 'Yellow' } default { 'Red' } }
     Write-Host ("  {0}. {1,-42} {2}" -f $f.Number, $f.Control, $f.Status) -ForegroundColor $color
 }
-Write-Host ("`n  Posture: {0}  |  Score {1}/{2}" -f $ml1, $points, $maxPoints) -ForegroundColor Cyan
+Write-Host ("`n  Lab checks: {0}  |  Internal score {1}/{2}" -f $labChecks, $points, $maxPoints) -ForegroundColor Cyan
 Write-Host "  Reports: $OutDir\$Label.(md|json)`n"

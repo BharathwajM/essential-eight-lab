@@ -1,28 +1,28 @@
-# Essential Eight Maturity Assessment & Hardening Lab
+# Essential Eight Workstation Hardening Lab
 
-A hands-on project that **measures a Windows host against the ASD/ACSC Essential Eight, hardens it, and measures again** to prove the lift — the way a real Essential Eight uplift is done. It ships a repeatable assessment tool, the hardening scripts, and the before/after evidence.
+A Windows hardening lab that **assesses selected ASD Essential Eight Maturity Level 1 (ML1) requirements** on one workstation. It includes a read-only PowerShell check, hardening scripts, and before-and-after evidence.
 
-The [Essential Eight](https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight) is the Australian government's baseline of eight mitigation strategies, each rated against a Maturity Model (ML0–ML3). This lab targets **Maturity Level 1** on a Windows 11 workstation (`WS01`) from my [Active Directory lab](https://github.com/BharathwajM/ad-attack-detection-lab).
+The [Essential Eight](https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight) is the Australian government's baseline of eight mitigation strategies, each rated against a Maturity Model (ML0–ML3). The target is a Windows 11 workstation (`WS01`) from my [Active Directory lab](https://github.com/BharathwajM/ad-attack-detection-lab).
 
 ## The result
 
-| | Aligned controls | Score |
+| | Checks rated aligned by the tool | Internal lab score |
 |---|---|---|
 | **Before hardening** | 0 / 8 | 2 / 16 |
 | **After hardening** | **4 / 8** | **8 / 16** |
 
-The four **host-enforceable** controls — application control, Office macros, user application hardening, restrict admin privileges — were lifted to **ML1**. The other four (patching ×2, MFA, backups) are process/infrastructure controls that a single host can't satisfy; the tool assesses them and the report gives a remediation path. Full write-up: **[`docs/assessment-report.md`](docs/assessment-report.md)**.
+The score compares local configuration checks on WS01 and has no equivalent in the ASD maturity model. An AppLocker event verifies one executable block for a standard user. The [assessment report](docs/assessment-report.md) separates that verified result from configured settings and requirements that need further evidence.
 
 ## `e8assess.ps1` — the assessment tool
 
-A read-only PowerShell tool that checks a Windows host against **all eight** ML1 controls, scores each *Aligned / Partial / Not aligned*, and writes a Markdown + JSON report. It changes nothing, so it's safe to run against any host.
+The script checks local signals across the eight mitigation strategies and writes Markdown and JSON reports. The *Aligned*, *Partial*, and *Not aligned* labels describe the tool's own checks. Run it from an elevated PowerShell session on the intended lab host.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File e8assess.ps1 -Label WS01-before
 ```
 
 ```
-Essential Eight ML1 assessment - WS01 [WS01-after]
+Essential Eight workstation checks - WS01 [WS01-after]
   1. Application control                        Aligned
   2. Patch applications                         Not aligned
   3. Configure Microsoft Office macro settings  Aligned
@@ -32,10 +32,10 @@ Essential Eight ML1 assessment - WS01 [WS01-after]
   7. Multi-factor authentication                Not aligned
   8. Regular backups                            Not aligned
 
-  Posture: Partial ML1 (4/8 aligned)  |  Score 8/16
+  Lab checks: 4/8 rated aligned  |  Internal score 8/16
 ```
 
-Each control's report entry also states **what ML2 would additionally require**, so the output doubles as a roadmap.
+The per-strategy notes are starting points. Use the [ASD Essential Eight Maturity Model](https://www.cyber.gov.au/publication/essential-eight-maturity-model) for the full criteria.
 
 ## Hardening applied
 
@@ -48,12 +48,12 @@ Documented, re-runnable scripts in [`hardening/`](hardening/) ([`Invoke-Hardenin
 | User app hardening | [`user-app-hardening.ps1`](hardening/user-app-hardening.ps1) | Disable IE11 & Windows Script Host; enable **8 Defender ASR rules** |
 | Restrict admin | [`restrict-admin.ps1`](hardening/restrict-admin.ps1) | Re-enable UAC; disable built-in Administrator; strip standard users from local admins |
 
-**Proof it enforces:** running an executable from a user-writable folder as a standard domain user triggered AppLocker event **8004 — "…DOWNLOADED-APP.EXE was prevented from running."** (see the report).
+**Verified AppLocker test:** running an executable from a user-writable folder as a standard domain user triggered AppLocker event **8004 — "…DOWNLOADED-APP.EXE was prevented from running."** (see the report).
 
 ## Repo layout
 
 ```
-e8assess.ps1            the ML1 assessment / scoring tool
+e8assess.ps1            the workstation checks and internal scoring tool
 hardening/              the four hardening controls + an orchestrator
 reports/                WS01-before / WS01-after  (.md and .json)
 docs/assessment-report.md   the before -> after assessment write-up

@@ -1,7 +1,9 @@
-﻿# Essential Eight (ML1) Assessment - WS01
+﻿# Essential Eight Workstation Checks - WS01
 *Run label: `WS01-after` | Generated 2026-11-08 19:36 | Read-only assessment*
 
-**Posture: Partial ML1 (4/8 aligned)**  |  Score: 8 / 16  |  Aligned controls: 4 / 8
+**Lab checks: 4/8 rated aligned by the tool**  |  Internal lab score: 8 / 16
+
+The status labels reflect local checks. Refer to the ASD maturity model for the full criteria.
 
 | # | Mitigation | Status | Detail |
 |---|---|---|---|
@@ -14,15 +16,15 @@
 | 7 | Multi-factor authentication | **Not aligned** | No MFA mechanism detected on this host (standalone lab). MFA is enforced at the identity provider, not locally. |
 | 8 | Regular backups | **Not aligned** | No backup solution or restore points detected. |
 
-## ML1 requirement & ML2 gap, per control
+## Selected maturity model references
 
 ### 1. Application control - Aligned
 - **ML1:** Executables, scripts, installers, HTA and control-panel applets are prevented from running in standard-user-writable locations (AppLocker/WDAC enforced).
 - **To reach ML2:** ML2 extends control to all locations, adds Microsoft "recommended block" driver/rule sets, and logs allowed/blocked execution centrally.
 
 ### 2. Patch applications - Not aligned
-- **ML1:** Patches for applications are applied within one month (two weeks for internet-facing / 48h if exploited); a vulnerability scanner is used at least fortnightly.
-- **To reach ML2:** ML2 tightens the SLA to two weeks and requires the scanner to run weekly against applications.
+- **ML1:** Scanning runs daily for online services and weekly for specified application categories. Patch deadlines depend on the application category and vulnerability severity.
+- **To reach ML2:** ML2 extends scanning and patching coverage to other applications. Check the ASD model for the full criteria.
 
 ### 3. Configure Microsoft Office macro settings - Aligned
 - **ML1:** Office macros are disabled for users without a business need; macros from the internet are blocked; users cannot change the setting.

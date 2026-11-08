@@ -5,7 +5,7 @@
     "aligned":  0,
     "points":  2,
     "maxPoints":  16,
-    "posture":  "Below ML1 (0/8 aligned)",
+    "posture":  "0/8 rated aligned by the tool",
     "findings":  [
                      {
                          "Number":  1,
@@ -22,8 +22,8 @@
                          "Status":  "Not aligned",
                          "Points":  0,
                          "Detail":  "5 pending software update(s); last patch 57 day(s) ago.",
-                         "Ml1Requirement":  "Patches for applications are applied within one month (two weeks for internet-facing / 48h if exploited); a vulnerability scanner is used at least fortnightly.",
-                         "Ml2Gap":  "ML2 tightens the SLA to two weeks and requires the scanner to run weekly against applications."
+                         "Ml1Requirement":  "Scanning runs daily for online services and weekly for specified application categories. Patch deadlines depend on the application category and vulnerability severity.",
+                         "Ml2Gap":  "ML2 extends scanning and patching coverage to other applications. Check the ASD model for the full criteria."
                      },
                      {
                          "Number":  3,
