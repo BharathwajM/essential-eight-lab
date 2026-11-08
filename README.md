@@ -54,6 +54,8 @@ Documented, re-runnable scripts in [`hardening/`](hardening/) ([`Invoke-Hardenin
 
 **Verified AppLocker tests.** A standard domain user was blocked from running an EXE (event **8004**), an MSI and a CMD script (event **8007**) from user-writable folders. The identical CMD probe was allowed from Program Files under the same user (event **8005**). The [assessment report](docs/assessment-report.md#1--application-control-applocker) includes the records and reproduction steps.
 
+**ASD Essentials transition.** ASD's October 2026 Essentials for enterprise IT maps application control to the **Trustworthy software** principle. The AppLocker allow and block events are evidence for software execution control on one user device. The lab assessment retains its original scope of selected Essential Eight ML1 requirements. [ASD transition guidance](https://www.cyber.gov.au/publication/transitioning-from-the-essential-eight#application-control)
+
 ## Repo layout
 
 ```
