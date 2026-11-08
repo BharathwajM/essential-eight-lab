@@ -26,7 +26,7 @@ param(
 $ErrorActionPreference = 'SilentlyContinue'
 
 # ---- scoring helpers --------------------------------------------------------
-# Status -> points. Overall maturity is derived from how many controls are Aligned.
+# Internal score for the local checks. Runtime tests that were not performed score zero.
 $script:STATUS_POINTS = @{ 'Aligned' = 2; 'Partial' = 1; 'Not aligned' = 0; 'Not assessed' = 0 }
 
 function New-Finding {
@@ -90,31 +90,38 @@ function Test-PatchApplications {
 
 # ---- 3. Office macro settings ----------------------------------------------
 function Test-OfficeMacros {
-    $apps = 'word', 'excel', 'powerpoint'; $ver = '16.0'
-    $blockedInternet = $true; $disabled = $true; $found = $false
-    foreach ($a in $apps) {
-        $base = "HKLM:\SOFTWARE\Policies\Microsoft\office\$ver\$a\security"
-        if (Test-Path $base) { $found = $true }
-        $bi = (Get-ItemProperty $base -Name blockcontentexecutionfrominternet -ErrorAction SilentlyContinue).blockcontentexecutionfrominternet
-        $vw = (Get-ItemProperty $base -Name vbawarnings -ErrorAction SilentlyContinue).vbawarnings
-        if ($bi -ne 1) { $blockedInternet = $false }
-        if ($vw -lt 3) { $disabled = $false }   # 3=disable w/ notify, 4=disable all
+    $apps = 'word', 'excel', 'powerpoint'
+    $configuredApps = @()
+    $policyFound = $false
+
+    foreach ($app in $apps) {
+        $path = "HKLM:\SOFTWARE\Policies\Microsoft\office\16.0\$app\security"
+        $policy = Get-ItemProperty -LiteralPath $path -ErrorAction SilentlyContinue
+        if ($null -ne $policy) { $policyFound = $true }
+        if ($policy.blockcontentexecutionfrominternet -eq 1 -and $policy.vbawarnings -in 3, 4) {
+            $configuredApps += $app
+        }
     }
-    $officeInstalled = Test-Path 'HKLM:\SOFTWARE\Microsoft\Office\16.0\Word\InstallRoot'
-    if ($found -and $blockedInternet -and $disabled) {
-        $status = 'Aligned'
-        $detail = 'Office macro policy disables macros and blocks macros originating from the internet.'
-    } elseif (-not $officeInstalled) {
-        $status = if ($found) { 'Aligned' } else { 'Not aligned' }
-        $detail = if ($found) { 'Macro hardening policy is set (Microsoft Office is not installed on this host).' }
-                  else { 'No Office macro policy set (Office not installed, but the policy should still be defined).' }
+
+    if ($configuredApps.Count -eq $apps.Count) {
+        $configuration = 'Configured'
+        $detail = 'Word, Excel and PowerPoint have the expected machine policy values.'
+    } elseif ($policyFound) {
+        $configuration = 'Incomplete'
+        $detail = "Expected machine policy values present for $($configuredApps.Count) of $($apps.Count) apps."
     } else {
-        $status = 'Not aligned'
-        $detail = 'Office is installed without a policy that disables macros / blocks internet macros.'
+        $configuration = 'Missing'
+        $detail = 'No machine policy keys were found for the Office apps checked.'
     }
-    New-Finding 3 'Configure Microsoft Office macro settings' $status $detail `
+
+    $finding = New-Finding 3 'Configure Microsoft Office macro settings' 'Not assessed' `
+        "Registry policy: $configuration. $detail Runtime behaviour requires a functional test in Office." `
         'Office macros are disabled for users without a business need; macros from the internet are blocked; users cannot change the setting.' `
         'ML2 adds antivirus scanning of allowed macros and blocks Win32 API calls from macros; macro events are logged.'
+    $finding | Add-Member -NotePropertyMembers @{
+        ConfigurationStatus = $configuration
+        RuntimeStatus = 'Not assessed'
+    } -PassThru
 }
 
 # ---- 4. User application hardening -----------------------------------------
@@ -269,7 +276,7 @@ foreach ($f in $findings) {
 # ---- console summary --------------------------------------------------------
 Write-Host "`nEssential Eight workstation checks - $($env:COMPUTERNAME) [$Label]" -ForegroundColor Cyan
 foreach ($f in $findings) {
-    $color = switch ($f.Status) { 'Aligned' { 'Green' } 'Partial' { 'Yellow' } default { 'Red' } }
+    $color = switch ($f.Status) { 'Aligned' { 'Green' } 'Partial' { 'Yellow' } 'Not assessed' { 'Gray' } default { 'Red' } }
     Write-Host ("  {0}. {1,-42} {2}" -f $f.Number, $f.Control, $f.Status) -ForegroundColor $color
 }
 Write-Host ("`n  Lab checks: {0}  |  Internal score {1}/{2}" -f $labChecks, $points, $maxPoints) -ForegroundColor Cyan

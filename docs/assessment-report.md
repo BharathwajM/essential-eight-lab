@@ -19,7 +19,7 @@ The lab score compares the tool's local checks before and after hardening. The e
 
 | # | Mitigation | Evidence status | What the lab shows |
 |---|---|---|---|
-| 1 | Application control | **Verified for one EXE test** | AppLocker event 8004 confirms a standard user was blocked from running an executable in a user-writable folder. Other file types need separate functional tests. |
+| 1 | Application control | **Verified for EXE, MSI and CMD probes** | Event 8004 records the EXE block. Event 8007 records blocks of the MSI and CMD probes in the standard user's Downloads folder. |
 | 2 | Patch applications | **Not assessed against the full requirement** | The host reported five pending software updates. Application patch timelines and scanner coverage need separate evidence. |
 | 3 | Office macro settings | **Configured** | Word, Excel, and PowerPoint policy values were set. Effective macro behaviour in Office needs a functional test. |
 | 4 | User application hardening | **Configured** | The after report records IE11 disabled and eight Defender ASR rules enabled. Browser controls and ASR enforcement were not functionally tested. |
@@ -39,7 +39,7 @@ Each control was applied with a documented, re-runnable script in
 Applied an **enforcing** AppLocker policy (Exe, MSI, Script collections) using the
 lab policy for EXE, MSI and scripts, with the EXE allow rule excluding the writable Windows
 Temp and Tasks paths. The Application Identity service was set to start automatically.
-The captured test below covers an EXE in a user-writable directory.
+The captured tests cover an EXE, a no-op MSI and a CMD script in user-writable directories.
 
 **Evidence — a standard user was actually blocked.** Running a copied executable from
 a user-writable folder as the standard domain user `SOCLAB\jsmith` produced AppLocker
@@ -50,11 +50,26 @@ Microsoft-Windows-AppLocker/EXE and DLL — Event 8004
 %OSDRIVE%\USERS\PUBLIC\E8TEST\DOWNLOADED-APP.EXE was prevented from running.
 ```
 
+**Follow-up MSI and script validation.** Two harmless probes were staged in the Downloads folder of `SOCLAB\jsmith` on WS01. The CMD file only echoed a marker. The MSI contained no payload or install actions and was invoked in administrative extraction mode. AppLocker blocked both under the standard user account.
+
+| Probe | UTC timestamp | Windows event | Record | AppLocker outcome |
+|---|---|---:|---:|---|
+| `E8-Probe.cmd` | 2026-11-08 11:01:57.443 | 8007 | 10 | Prevented from running |
+| `E8-Probe.msi` | 2026-11-08 11:01:58.902 | 8007 | 13 | Prevented from running |
+
+The records are from `Microsoft-Windows-AppLocker/MSI and Script` on `WS01.soclab.local`. To reproduce, stage a harmless CMD script and a no-payload MSI in a standard user's Downloads directory. Run the commands below under that account, then check that event 8007 names each probe. See [Microsoft's AppLocker event reference](https://learn.microsoft.com/windows/security/application-security/application-control/app-control-for-business/applocker/using-event-viewer-with-applocker).
+
+```cmd
+call "%USERPROFILE%\Downloads\E8-Probe.cmd"
+start /wait "" msiexec.exe /a "%USERPROFILE%\Downloads\E8-Probe.msi" /qn TARGETDIR="%TEMP%\E8-AdminProbe"
+wevtutil qe "Microsoft-Windows-AppLocker/MSI and Script" /q:"*[System[(EventID=8007)]]" /rd:true /f:text /c:6
+```
+
 ### 3 — Office macro settings
 Set the enterprise Group Policy registry values for Word, Excel and PowerPoint:
 `vbawarnings = 3` (disable macros with notification) and
 `blockcontentexecutionfrominternet = 1` (block macros carrying Mark-of-the-Web).
-The lab captured registry settings. Runtime enforcement would need testing in Office.
+The lab captured registry settings. The current script reports those settings separately and leaves runtime enforcement as **Not assessed** until tested in Office.
 
 ### 4 — User application hardening
 Disabled Internet Explorer 11, disabled **Windows Script Host** (stops `.vbs`/`.js`
@@ -95,8 +110,7 @@ These require organisation-level process or infrastructure, not a host setting:
 
 ## Further validation
 
-Re-run the AppLocker test with a standard user against representative EXE, MSI
-and script files. On a workstation with Office installed, test downloaded and
+Extend the AppLocker tests to additional file types and writable paths. On a workstation with Office installed, test downloaded and
 local macros and record the effective policy. Review browser settings and
 effective admin group membership separately.
 

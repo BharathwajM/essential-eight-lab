@@ -11,7 +11,7 @@ The [Essential Eight](https://www.cyber.gov.au/resources-business-and-government
 | **Before hardening** | 0 / 8 | 2 / 16 |
 | **After hardening** | **4 / 8** | **8 / 16** |
 
-The score compares local configuration checks on WS01 and has no equivalent in the ASD maturity model. An AppLocker event verifies one executable block for a standard user. The [assessment report](docs/assessment-report.md) separates that verified result from configured settings and requirements that need further evidence.
+The score compares local configuration checks on WS01 and has no equivalent in the ASD maturity model. AppLocker events verify that EXE, MSI and CMD probes were blocked for a standard user. The [assessment report](docs/assessment-report.md) separates that verified result from configured settings and requirements that need further evidence.
 
 ## `e8assess.ps1` — the assessment tool
 
@@ -20,6 +20,8 @@ The script checks local signals across the eight mitigation strategies and write
 ```powershell
 powershell -ExecutionPolicy Bypass -File e8assess.ps1 -Label WS01-before
 ```
+
+Historical WS01 output from the earlier version of the tool.
 
 ```
 Essential Eight workstation checks - WS01 [WS01-after]
@@ -37,6 +39,8 @@ Essential Eight workstation checks - WS01 [WS01-after]
 
 The per-strategy notes are starting points. Use the [ASD Essential Eight Maturity Model](https://www.cyber.gov.au/publication/essential-eight-maturity-model) for the full criteria.
 
+The Office check reports **Configured**, **Incomplete**, or **Missing** for the machine policy. Its runtime result is **Not assessed** and earns zero points until supported by a separate functional test. The checked-in WS01 reports preserve the results originally captured.
+
 ## Hardening applied
 
 Documented, re-runnable scripts in [`hardening/`](hardening/) ([`Invoke-Hardening.ps1`](hardening/Invoke-Hardening.ps1) runs them in order):
@@ -48,7 +52,7 @@ Documented, re-runnable scripts in [`hardening/`](hardening/) ([`Invoke-Hardenin
 | User app hardening | [`user-app-hardening.ps1`](hardening/user-app-hardening.ps1) | Disable IE11 & Windows Script Host; enable **8 Defender ASR rules** |
 | Restrict admin | [`restrict-admin.ps1`](hardening/restrict-admin.ps1) | Re-enable UAC; disable built-in Administrator; strip standard users from local admins |
 
-**Verified AppLocker test:** running an executable from a user-writable folder as a standard domain user triggered AppLocker event **8004 — "…DOWNLOADED-APP.EXE was prevented from running."** (see the report).
+**Verified AppLocker tests.** A standard domain user was blocked from running an EXE (event **8004**), an MSI and a CMD script (event **8007**) from user-writable folders. The [assessment report](docs/assessment-report.md#1--application-control-applocker) includes the records and reproduction steps.
 
 ## Repo layout
 
