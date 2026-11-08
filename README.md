@@ -52,7 +52,7 @@ Documented, re-runnable scripts in [`hardening/`](hardening/) ([`Invoke-Hardenin
 | User app hardening | [`user-app-hardening.ps1`](hardening/user-app-hardening.ps1) | Disable IE11 & Windows Script Host; enable **8 Defender ASR rules** |
 | Restrict admin | [`restrict-admin.ps1`](hardening/restrict-admin.ps1) | Re-enable UAC; disable built-in Administrator; strip standard users from local admins |
 
-**Verified AppLocker tests.** A standard domain user was blocked from running an EXE (event **8004**), an MSI and a CMD script (event **8007**) from user-writable folders. The [assessment report](docs/assessment-report.md#1--application-control-applocker) includes the records and reproduction steps.
+**Verified AppLocker tests.** A standard domain user was blocked from running an EXE (event **8004**), an MSI and a CMD script (event **8007**) from user-writable folders. The identical CMD probe was allowed from Program Files under the same user (event **8005**). The [assessment report](docs/assessment-report.md#1--application-control-applocker) includes the records and reproduction steps.
 
 ## Repo layout
 

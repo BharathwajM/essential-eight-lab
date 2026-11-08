@@ -65,6 +65,15 @@ start /wait "" msiexec.exe /a "%USERPROFILE%\Downloads\E8-Probe.msi" /qn TARGETD
 wevtutil qe "Microsoft-Windows-AppLocker/MSI and Script" /q:"*[System[(EventID=8007)]]" /rd:true /f:text /c:6
 ```
 
+**Allowed-path control.** The original CMD probe was copied byte for byte to `C:\Program Files\E8-AppLocker-Validation\E8-Probe.cmd` by a lab administrator. Both copies had SHA-256 `b86d740a04ab7db8a703f67199d02a8eede0c308eed0808cb5d7ba198ab66fa5`. The same standard user, `SOCLAB\jsmith`, ran both copies in the same way.
+
+| Path | UTC timestamp | Windows event | Record | Result |
+|---|---|---:|---:|---|
+| `%OSDRIVE%\USERS\JSMITH\DOWNLOADS\E8-PROBE.CMD` | 2026-11-08 11:15:37.455 | 8007 | 18 | Blocked |
+| `%PROGRAMFILES%\E8-APPLOCKER-VALIDATION\E8-PROBE.CMD` | 2026-11-08 11:15:37.703 | 8005 | 19 | Allowed by `(Default) All scripts in Program Files` and printed `E8-SCRIPT-RAN` |
+
+Both AppLocker records had the same target user SID. To reproduce the pair, stage an identical copy in the approved directory as an administrator, then run each copy as the standard user and query the MSI and Script log for events 8005 and 8007. The approved staging copy was removed after the test.
+
 ### 3 — Office macro settings
 Set the enterprise Group Policy registry values for Word, Excel and PowerPoint:
 `vbawarnings = 3` (disable macros with notification) and
