@@ -1,0 +1,4 @@
+*.local.txt
+*.pyc
+__pycache__/
+# reports/ holds the before/after assessment output and is committed as evidence.

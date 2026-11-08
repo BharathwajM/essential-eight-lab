@@ -1,0 +1,83 @@
+﻿{
+    "host":  "WS01",
+    "label":  "WS01-after",
+    "generated":  "2026-11-08 19:36:47Z",
+    "aligned":  4,
+    "points":  8,
+    "maxPoints":  16,
+    "posture":  "Partial ML1 (4/8 aligned)",
+    "findings":  [
+                     {
+                         "Number":  1,
+                         "Control":  "Application control",
+                         "Status":  "Aligned",
+                         "Points":  2,
+                         "Detail":  "AppLocker enforcing with 8 rule(s); Application Identity service \u0027Running\u0027.",
+                         "Ml1Requirement":  "Executables, scripts, installers, HTA and control-panel applets are prevented from running in standard-user-writable locations (AppLocker/WDAC enforced).",
+                         "Ml2Gap":  "ML2 extends control to all locations, adds Microsoft \"recommended block\" driver/rule sets, and logs allowed/blocked execution centrally."
+                     },
+                     {
+                         "Number":  2,
+                         "Control":  "Patch applications",
+                         "Status":  "Not aligned",
+                         "Points":  0,
+                         "Detail":  "5 pending software update(s); last patch 57 day(s) ago.",
+                         "Ml1Requirement":  "Patches for applications are applied within one month (two weeks for internet-facing / 48h if exploited); a vulnerability scanner is used at least fortnightly.",
+                         "Ml2Gap":  "ML2 tightens the SLA to two weeks and requires the scanner to run weekly against applications."
+                     },
+                     {
+                         "Number":  3,
+                         "Control":  "Configure Microsoft Office macro settings",
+                         "Status":  "Aligned",
+                         "Points":  2,
+                         "Detail":  "Office macro policy disables macros and blocks macros originating from the internet.",
+                         "Ml1Requirement":  "Office macros are disabled for users without a business need; macros from the internet are blocked; users cannot change the setting.",
+                         "Ml2Gap":  "ML2 adds antivirus scanning of allowed macros and blocks Win32 API calls from macros; macro events are logged."
+                     },
+                     {
+                         "Number":  4,
+                         "Control":  "User application hardening",
+                         "Status":  "Aligned",
+                         "Points":  2,
+                         "Detail":  "Internet Explorer 11 disabled; 8 ASR rule(s) enabled to harden user applications.",
+                         "Ml1Requirement":  "Web browsers do not process Java or web advertisements from the internet; Internet Explorer 11 is disabled/removed; browser security settings cannot be changed by users.",
+                         "Ml2Gap":  "ML2 blocks additional ASR vectors (Office child processes, credential theft, PowerShell/script abuse) and logs blocked events."
+                     },
+                     {
+                         "Number":  5,
+                         "Control":  "Restrict administrative privileges",
+                         "Status":  "Aligned",
+                         "Points":  2,
+                         "Detail":  "Local Administrators limited to admin accounts (3 member(s)); built-in Administrator disabled; UAC enabled.",
+                         "Ml1Requirement":  "Privileged access is limited and validated; privileged accounts are separate from day-to-day accounts and cannot browse the web or read email; unprivileged users are not local administrators.",
+                         "Ml2Gap":  "ML2 adds just-in-time / time-limited admin, a separate privileged operating environment, and logging of privileged access."
+                     },
+                     {
+                         "Number":  6,
+                         "Control":  "Patch operating systems",
+                         "Status":  "Not aligned",
+                         "Points":  0,
+                         "Detail":  "Microsoft Windows 11 Enterprise Evaluation; last OS update 57 day(s) ago - outside the one-month window.",
+                         "Ml1Requirement":  "Operating systems are patched within one month (two weeks for internet-facing); unsupported operating systems are replaced.",
+                         "Ml2Gap":  "ML2 tightens the SLA to two weeks and requires a vulnerability scanner to confirm OS patch levels weekly."
+                     },
+                     {
+                         "Number":  7,
+                         "Control":  "Multi-factor authentication",
+                         "Status":  "Not aligned",
+                         "Points":  0,
+                         "Detail":  "No MFA mechanism detected on this host (standalone lab). MFA is enforced at the identity provider, not locally.",
+                         "Ml1Requirement":  "MFA is used for remote access, for internet-facing services, and by privileged users; it is phishing-resistant where required.",
+                         "Ml2Gap":  "ML2 requires MFA for all users of internet-facing services and logs successful/failed MFA events."
+                     },
+                     {
+                         "Number":  8,
+                         "Control":  "Regular backups",
+                         "Status":  "Not aligned",
+                         "Points":  0,
+                         "Detail":  "No backup solution or restore points detected.",
+                         "Ml1Requirement":  "Backups of important data, software and configuration are performed and retained per business needs; restoration is tested; unprivileged accounts cannot modify or delete backups.",
+                         "Ml2Gap":  "ML2 requires more frequent backups, coordinated restoration testing, and that unprivileged accounts cannot access other users\u0027 backups."
+                     }
+                 ]
+}
