@@ -58,4 +58,4 @@ docs/assessment-report.md   the before and after write-up with evidence
 
 ---
 
-*Part of my security portfolio, alongside an [AD attack & detection lab](https://github.com/BharathwajM/ad-attack-detection-lab), a [phishing triage tool](https://github.com/BharathwajM/phishing-triage-automation) and a [SOC monitoring lab](https://github.com/BharathwajM/soc-portfolio-lab). All work was done in an isolated VirtualBox lab.*
+*Part of my security portfolio. See also: [SOC monitoring lab (Sentinel)](https://github.com/BharathwajM/soc-portfolio-lab) · [AD attack & detection lab (Splunk)](https://github.com/BharathwajM/ad-attack-detection-lab) · [Phishing triage tool (Python)](https://github.com/BharathwajM/phishing-triage-automation). All work was done in an isolated VirtualBox lab.*
