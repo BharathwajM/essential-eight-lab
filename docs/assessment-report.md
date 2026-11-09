@@ -1,6 +1,6 @@
-# Essential Eight Workstation Checks and Hardening — WS01
+# Essential Eight Workstation Hardening: WS01
 
-**Target:** WS01 — Windows 11 Enterprise, domain-joined member of `soclab.local`
+**Target:** WS01, a Windows 11 Enterprise workstation joined to `soclab.local`
 **Scope:** Selected [ASD Essential Eight Maturity Level 1](https://www.cyber.gov.au/publication/essential-eight-maturity-model) requirements on one lab workstation.
 **Method:** baseline assessment → apply hardening → re-assess, using the repeatable
 [`e8assess.ps1`](../e8assess.ps1) scoring tool. Full tool output is in
@@ -10,18 +10,20 @@
 
 ## Result at a glance
 
-| | Checks rated aligned by the tool | Internal lab score |
+| | Controls rated aligned | Tool score |
 |---|---|---|
 | **Before** | 0 / 8 | 2 / 16 |
 | **After** | **4 / 8** | **8 / 16** |
 
-The lab score compares the tool's local checks before and after hardening. The evidence below describes what WS01 demonstrated and where further validation is needed.
+These are the captured runs in [`reports/`](../reports/). The score is the tool's own measure, not an ASD maturity rating. After these runs I made the Office check stricter: WS01 has no Office installed, so the macro policy is now reported as *Configured* and scored as *Not assessed* until it is tested in Office. Under that rule the after-state scores 3/8 aligned (6/16).
+
+The table below separates what was proven by a test from what was configured and confirmed in settings only.
 
 | # | Mitigation | Evidence status | What the lab shows |
 |---|---|---|---|
 | 1 | Application control | **Verified for EXE, MSI and CMD probes** | Event 8004 records the EXE block. Event 8007 records blocks of the MSI and CMD probes in the standard user's Downloads folder. |
 | 2 | Patch applications | **Not assessed against the full requirement** | The host reported five pending software updates. Application patch timelines and scanner coverage need separate evidence. |
-| 3 | Office macro settings | **Configured** | Word, Excel, and PowerPoint policy values were set. Effective macro behaviour in Office needs a functional test. |
+| 3 | Office macro settings | **Configured** | Word, Excel, and PowerPoint policy values were set. Office is not installed on WS01, so macro behaviour was not tested. |
 | 4 | User application hardening | **Configured** | The after report records IE11 disabled and eight Defender ASR rules enabled. Browser controls and ASR enforcement were not functionally tested. |
 | 5 | Restrict admin privileges | **Configured** | UAC was enabled, the built-in Administrator was disabled, and the local check looked for the lab's named standard accounts. Effective privileges and account separation need separate verification. |
 | 6 | Patch operating systems | **Not assessed against the full requirement** | The last host update was 57 days old. Patch management across the environment needs separate evidence. |
@@ -35,18 +37,18 @@ The lab score compares the tool's local checks before and after hardening. The e
 Each control was applied with a documented, re-runnable script in
 [`hardening/`](../hardening/).
 
-### 1 — Application control (AppLocker)
+### 1. Application control (AppLocker)
 Applied an **enforcing** AppLocker policy (Exe, MSI, Script collections) using the
 lab policy for EXE, MSI and scripts, with the EXE allow rule excluding the writable Windows
 Temp and Tasks paths. The Application Identity service was set to start automatically.
 The captured tests cover an EXE, a no-op MSI and a CMD script in user-writable directories.
 
-**Evidence — a standard user was actually blocked.** Running a copied executable from
+**Evidence: a standard user was blocked.** Running a copied executable from
 a user-writable folder as the standard domain user `SOCLAB\jsmith` produced AppLocker
 event **8004**:
 
 ```
-Microsoft-Windows-AppLocker/EXE and DLL — Event 8004
+Log: Microsoft-Windows-AppLocker/EXE and DLL   Event ID: 8004
 %OSDRIVE%\USERS\PUBLIC\E8TEST\DOWNLOADED-APP.EXE was prevented from running.
 ```
 
@@ -74,13 +76,13 @@ wevtutil qe "Microsoft-Windows-AppLocker/MSI and Script" /q:"*[System[(EventID=8
 
 Both AppLocker records had the same target user SID. To reproduce the pair, stage an identical copy in the approved directory as an administrator, then run each copy as the standard user and query the MSI and Script log for events 8005 and 8007. The approved staging copy was removed after the test.
 
-### 3 — Office macro settings
+### 3. Office macro settings
 Set the enterprise Group Policy registry values for Word, Excel and PowerPoint:
 `vbawarnings = 3` (disable macros with notification) and
 `blockcontentexecutionfrominternet = 1` (block macros carrying Mark-of-the-Web).
 The lab captured registry settings. The current script reports those settings separately and leaves runtime enforcement as **Not assessed** until tested in Office.
 
-### 4 — User application hardening
+### 4. User application hardening
 Disabled Internet Explorer 11, disabled **Windows Script Host** (stops `.vbs`/`.js`
 double-click execution), and enabled **8 Microsoft Defender Attack Surface Reduction
 (ASR) rules** covering the common user-application abuse paths:
@@ -94,7 +96,7 @@ Block executable content from email/webmail
 Block untrusted/unsigned processes from USB
 ```
 
-### 5 — Restrict administrative privileges
+### 5. Restrict administrative privileges
 Re-enabled **User Account Control**, **disabled the built-in Administrator** account,
 and checked local Administrators for the named standard lab accounts. This check
 covers those direct memberships and does not resolve nested group membership.
