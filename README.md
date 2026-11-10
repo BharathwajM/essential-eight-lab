@@ -45,7 +45,12 @@ All of the scripts in [`hardening/`](hardening/) can be re-run. [`Invoke-Hardeni
 
 ## ASD Essentials for enterprise IT
 
-ASD has since evolved the Essential Eight into [ASD Essentials for enterprise IT](https://www.cyber.gov.au/publication/transitioning-from-the-essential-eight#application-control), which maps application control to its **Trustworthy software** principle. The AppLocker block and allow events in this lab are the kind of evidence that principle asks for on a user device. This lab was scoped and scored against the Essential Eight ML1.
+ASD has evolved the Essential Eight into ASD Essentials for enterprise IT, which rates each action as *not assessed*, *not effective*, *partially effective* or *fully effective* per domain. Using ASD's [transition guidance](https://www.cyber.gov.au/publication/transitioning-from-the-essential-eight) (15 October 2026), I mapped this lab's work to the new principles in [`docs/asd-essentials-mapping.md`](docs/asd-essentials-mapping.md). The short version:
+
+- **Application control** carries over best. The AppLocker block and allow events are operational evidence, which is what the new model asks for.
+- **Office macros** would be *not assessed*, because the policy was set but never tested in Office. The scoring tool already treats it that way.
+- **User application hardening and admin restrictions** are deployed but mostly not functionally tested, so they would be *partially effective* at best.
+- **Gaps** include an exceptions register for AppLocker, a separate admin environment, and forwarding AppLocker events to the SIEM.
 
 ## Repo layout
 
@@ -54,6 +59,7 @@ e8assess.ps1                the assessment and scoring tool
 hardening/                  the four hardening scripts and a runner
 reports/                    WS01-before and WS01-after (.md and .json)
 docs/assessment-report.md   the before and after write-up with evidence
+docs/asd-essentials-mapping.md  how the lab maps to ASD Essentials for enterprise IT
 ```
 
 ---
