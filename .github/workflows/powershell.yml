@@ -1,0 +1,64 @@
+name: PowerShell checks
+
+on:
+  push:
+    paths: ['**.ps1', '.github/workflows/powershell.yml']
+  pull_request:
+    paths: ['**.ps1', '.github/workflows/powershell.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  check:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Every script parses
+        run: |
+          $failed = 0
+          foreach ($f in Get-ChildItem -Recurse -Filter *.ps1) {
+            $tokens = $null; $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$tokens, [ref]$errors)
+            foreach ($e in $errors) {
+              $rel = Resolve-Path -Relative $f.FullName
+              Write-Output "::error file=$rel,line=$($e.Extent.StartLineNumber)::$($e.Message)"
+              $failed++
+            }
+          }
+          if ($failed) { exit 1 }
+          Write-Output "All scripts parse."
+
+      - name: PSScriptAnalyzer (fails on errors, reports warnings)
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -RequiredVersion 1.23.0 -Scope CurrentUser
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error, Warning
+          foreach ($r in $results) {
+            $level = if ($r.Severity -eq 'Error') { 'error' } else { 'warning' }
+            $rel = Resolve-Path -Relative $r.ScriptPath
+            Write-Output "::${level} file=$rel,line=$($r.Line)::$($r.RuleName): $($r.Message)"
+          }
+          $errorCount = @($results | Where-Object Severity -eq 'Error').Count
+          Write-Output "::notice::PSScriptAnalyzer: $errorCount error(s), $(@($results).Count - $errorCount) warning(s)"
+          if ($errorCount) { exit 1 }
+
+      - name: Run the assessment on a clean runner (read-only)
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'e8'
+          ./e8assess.ps1 -OutDir $out -Label github-runner
+          $report = Get-Content (Join-Path $out 'github-runner.json') -Raw | ConvertFrom-Json
+          $allowed = 'Aligned', 'Partial', 'Not aligned', 'Not assessed'
+          if (@($report.findings).Count -ne 8) { Write-Output "::error::Expected 8 findings, got $(@($report.findings).Count)"; exit 1 }
+          $bad = @($report.findings | Where-Object { $_.Status -notin $allowed })
+          if ($bad) { Write-Output "::error::Unexpected status: $($bad.Status -join ', ')"; exit 1 }
+          Write-Output "::notice::Clean GitHub Windows runner (not the lab host): $($report.posture), score $($report.points)/$($report.maxPoints)"
